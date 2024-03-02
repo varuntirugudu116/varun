@@ -1,0 +1,68 @@
+#include <stdio.h>
+typedef struct {
+    int pid;
+    int burst_time;
+    int priority;
+    int arrival_time;
+    int waiting_time;
+    int turnaround_time;
+} Process;
+void priority_scheduling(Process processes[], int n) {
+    int current_time = 0;
+    int completed = 0;
+    int total_wait_time = 0;
+    int total_turnaround_time = 0;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n - i - 1; j++) {
+            if (processes[j].priority > processes[j + 1].priority) {
+                Process temp = processes[j];
+                processes[j] = processes[j + 1];
+                processes[j + 1] = temp;
+            }
+        }
+    }
+    for (int i = 0; i < n; i++) {
+        if (current_time < processes[i].arrival_time) {
+            current_time = processes[i].arrival_time;
+        }
+        int time_slice = processes[i].burst_time;
+        current_time += time_slice;
+        processes[i].waiting_time = current_time - processes[i].arrival_time - processes[i].burst_time;
+        total_wait_time += processes[i].waiting_time;
+        total_turnaround_time += current_time - processes[i].arrival_time;
+        processes[i].turnaround_time = current_time - processes[i].arrival_time;
+        completed++;
+        for (int j = i + 1; j < n; j++) {
+            if (processes[j].arrival_time <= current_time) {
+                if (processes[j].burst_time > time_slice) {
+                    processes[j].burst_time -= time_slice;
+                    break;
+                } else {
+                    time_slice -= processes[j].burst_time;
+                    processes[j].waiting_time = current_time - processes[j].arrival_time - processes[j].burst_time;
+                    total_wait_time += processes[j].waiting_time;
+                    total_turnaround_time += current_time - processes[j].arrival_time;
+                    processes[j].turnaround_time = current_time - processes[j].arrival_time;
+                    completed++;
+                }
+            }
+        }
+    }
+    float avg_wait_time = (float) total_wait_time / n;
+    float avg_turnaround_time = (float) total_turnaround_time / n;
+    printf("Average waiting time is %f\n", avg_wait_time);
+    printf("Average turnaround time is %f\n", avg_turnaround_time);
+}
+int main() {
+    int n;
+    printf("Enter the number of processes: ");
+    scanf("%d", &n);
+    Process processes[n];
+    for (int i = 0; i < n; i++) {
+        printf("Enter the burst time, priority, and arrival time of process %d: ", i + 1);
+        scanf("%d %d %d", &processes[i].burst_time, &processes[i].priority, &processes[i].arrival_time);
+        processes[i].pid = i + 1;
+    }
+    priority_scheduling(processes, n);
+    return 0;
+}
